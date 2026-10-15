@@ -1,5 +1,7 @@
 # 商品相关视频候选排序
 
+[新手逐步使用指南](USER_GUIDE.md) · [用途与适用人群介绍](INTRODUCTION.md)
+
 `product-video-reverse-search` · 独立技能仓库 · MIT
 
 适合：找商品内容参考的商家、剪辑师、研究人员

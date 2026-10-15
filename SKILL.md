@@ -31,3 +31,7 @@ license: MIT
 执行命令和当前限制见 [README.md](README.md) 的第三轮章节。
 
 取得候选前按 [references/search-workflow.md](references/search-workflow.md) 选择可用路线；不能把工具可用当成已执行检索。
+
+## 面向使用者的说明
+
+解释用途、适用人群、下载和第一次运行时，读 [USER_GUIDE.md](USER_GUIDE.md)；需要中文对外介绍时参考 [INTRODUCTION.md](INTRODUCTION.md)，不要把介绍稿等同于已发布。
