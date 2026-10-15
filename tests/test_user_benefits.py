@@ -19,6 +19,10 @@ class RankingInputs(unittest.TestCase):
     def test_future_date_unknown_and_invalid_counts_unknown(self):
         self.assertIsNone(self.m.recency_score('2099-01-01',self.m.parse_date('2026-10-15T00:00:00Z')))
         for value in [-1,True,float('inf')]: self.assertIsNone(self.m.interaction_score(value))
+    def test_invalid_metrics_remain_strict_json_unknown(self):
+        data=self.data(); data['candidates'][0].update(views=float('nan'),likes=-1,comments=True)
+        report=self.m.rank(data); json.dumps(report,allow_nan=False)
+        for field in ('views','likes','comments'): self.assertIsNone(report['results'][0][field])
     def test_bad_match_and_dangerous_url_rejected(self):
         for change in [{'match_level':'definitely_real'},{'url':'javascript:alert(1)'}]:
             data=self.data(); data['candidates'][0].update(change)

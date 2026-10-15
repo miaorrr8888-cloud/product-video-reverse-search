@@ -55,6 +55,8 @@ def rank(data,as_of=None):
         seen.add(url)
         title=candidate.get('title','')
         if not isinstance(title,str): raise ValueError('title must be text')
+        for field in ('source','published'):
+            if candidate.get(field) is not None and not isinstance(candidate[field],str): raise ValueError(field+' must be text or null')
         match=candidate.get('match_level') or 'unknown'
         if match not in MATCH_SCORE: raise ValueError('match_level must be confirmed, similar or unknown')
         overlap,_,_=keyword_overlap(product,title)
@@ -66,6 +68,8 @@ def rank(data,as_of=None):
                 'source':SOURCE_CRED.get(candidate.get('source'),.70),'recency':recent or 0.0}
         parts={key:round(weight*values[key],6) for key,weight in weights.items()}
         supplied={key:candidate.get(key) for key in ('source','title','published','views','likes','comments')}
+        for field in ('views','likes','comments'):
+            if interaction_score(supplied[field]) is None: supplied[field]=None
         rows.append({**supplied,'url':url,'match_level':match,'score':round(sum(parts.values()),6),
                      'weights':weights,'score_parts':parts,'keyword_overlap':overlap,
                      'interaction_known':views is not None,'recency_known':recent is not None,
