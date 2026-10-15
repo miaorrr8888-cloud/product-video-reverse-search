@@ -1,37 +1,52 @@
-# product-video-reverse-search
+# 商品相关视频候选排序
 
-> Packaged by the WorkBuddy History Audit (2026-10-14). Source copied verbatim from the
-> original location; **no modifications made to the original project**.
+`product-video-reverse-search` · 独立技能仓库 · MIT
 
-## 功能介绍
-商品反查带货视频。输入商品图片或 1688 链接，自动提取商品属性，跨抖音/TikTok/YouTube 搜索相关带货视频，区分「确认同款/相似参考」，筛选最优 2-5 条并给出匹配依据、可借鉴开头、展示场景、卖点与不足。免费、无需付费 API Key、不编造数据（缺失标 UNKNOWN）。
+适合：找商品内容参考的商家、剪辑师、研究人员
 
-## 起源与许可
-- 类型: 用户原创 Skill (agent_created)
-- 许可: MIT (见 LICENSE)
-- 是否含密钥/Token: 否 (已通过审计扫描)
+## 解决什么问题
 
-## 目录内容
-- `SKILL.md` / `README.md` — 技能定义与使用说明
-- 脚本与测试 — 见各子目录
-- `LICENSE` — MIT
+对已经取得的视频候选排出优先查看顺序，说明分数来自哪些字段，减少盲目翻找。
 
-## 发布前检查清单
-- [x] 无硬编码密钥 / Cookie / Token
-- [x] 依赖清楚 (stdlib-only 或显式声明)
-- [x] 含使用说明
-- [ ] 作者补充中文/英文双语 README
-- [ ] 补充 CI 测试 (如适用)
+## 快速开始
 
-## Verified scope
-This package does not establish current platform availability, demand, sales or permission to contact people.
-Ranking is a heuristic applied to supplied evidence, not independent verification.
-Use authorized sources; live platform access and outreach were not tested.
+Python 3.10+，标准库。
 
-## 独立仓库
+在本仓库根目录运行：
 
-本仓库只包含 product-video-reverse-search 一个技能。
-源码目录、SKILL.md、许可和相关测试均可独立取得，不依赖其他技能仓库。
-工作记录与其他技能入口：[agent-skills-worklog](https://github.com/miaorrr8888-cloud/agent-skills-worklog)。
+```sh
+python scripts/extract_and_rank.py examples/candidates.json --as-of 2026-10-15T00:00:00Z
+python scripts/extract_and_rank.py examples/candidates.json --as-of 2026-10-15T00:00:00Z --json
+```
 
-离线验证：`python -m unittest discover -s tests -v`。
+## 输入与输出
+
+**输入**：product 对象和 candidates 数组，字段及含义见 examples/candidates.json。使用自己有权整理的数据。
+
+**输出**：前五名 Markdown 或完整 JSON，含去重数、权重、各项分数和 SUPPLIED_UNVERIFIED 标记。
+
+## 本次完善
+
+原有缺口：名称容易让人误以为自带搜全网和视觉同款识别；缺去重与可复现评分时间。
+
+已补：补输入校验、跟踪参数去重、固定 --as-of 时间、JSON 分数构成；无效计数和未来日期保留未知；明确输入数据未被独立核实。
+
+## 仍然缺什么
+
+脚本不执行网络反向搜索或图片匹配；confirmed 由输入声明。来源权重是内部假设，分数不等于销量、热度真实性或版权许可。
+
+## 验证与使用注意
+
+```sh
+python -m unittest discover -s tests -v
+```
+
+测试覆盖被断言的离线行为，不等于真实平台、生产模型或业务效果验证。
+
+示例数据和图片均为合成演示，不是真实客户、交易、销量或模型成绩。不要提交真实凭据和私有输入。
+
+## 来源与工作记录
+
+由 miaorrr8888-cloud 在 AI 辅助下积累和维护，来源与边界见 [PROVENANCE.md](PROVENANCE.md)，许可见 [LICENSE](LICENSE)。
+
+[全部独立技能与阶段性工作记录](https://github.com/miaorrr8888-cloud/agent-skills-worklog)

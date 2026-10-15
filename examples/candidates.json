@@ -1,0 +1,33 @@
+{
+  "synthetic": true,
+  "product": {
+    "brand": "Demo",
+    "model": "D1",
+    "product_name": "Synthetic demo product",
+    "keywords": [
+      "unboxing"
+    ]
+  },
+  "candidates": [
+    {
+      "source": "YouTube",
+      "url": "https://videos.example/watch?v=demo-a&utm_source=demo",
+      "title": "Demo D1 unboxing — synthetic example",
+      "published": "2026-10-01T00:00:00Z",
+      "views": null,
+      "likes": null,
+      "comments": null,
+      "match_level": "similar"
+    },
+    {
+      "source": "YouTube",
+      "url": "https://videos.example/watch?v=demo-b",
+      "title": "Different product — synthetic example",
+      "published": null,
+      "views": 100,
+      "likes": null,
+      "comments": null,
+      "match_level": "unknown"
+    }
+  ]
+}

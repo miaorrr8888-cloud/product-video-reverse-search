@@ -1,166 +1,90 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-商品反查带货视频 · 确定性打分排序脚本
-
-输入: candidates.json
-  {
-    "product": {"brand":"", "model":"", "product_name":"", "appearance_features":[], "keywords":[]},
-    "candidates": [
-      {"source":"YouTube", "url":"https://...", "title":"...",
-       "published":null, "views":null, "likes":null, "comments":null,
-       "match_level":"confirmed|similar|unknown"}
-    ]
-  }
-
-输出: Markdown 排名报告（stdout）
-
-纪律: 只给真实传入的数据打分; 计数缺失(none)=UNKNOWN, 不编造, 不扣分(权重让渡)。
-"""
+"""Rank supplied video candidates; no crawling, visual recognition or metric verification."""
+import argparse
+from datetime import datetime,timezone
 import json
-import sys
 import math
-from datetime import datetime, timezone
+from urllib.parse import urlsplit,urlunsplit,parse_qsl,urlencode
 
+MATCH_SCORE={'confirmed':1.0,'similar':0.6,'unknown':0.3}
+SOURCE_CRED={'YouTube':0.90,'TikTok':0.85,'Douyin':0.90,'抖音':0.90,'TikTok Shop':0.80}
 
-def norm(s):
-    return (s or "").lower()
+def norm(value): return str(value or '').lower()
 
+def keyword_overlap(product,title):
+    words=[norm(product.get('brand')),norm(product.get('model'))]+[norm(x) for x in product.get('keywords',[]) if x]
+    words=list(dict.fromkeys(w for w in words if w)); hits=sum(w in norm(title) for w in words)
+    return hits/len(words) if words else 0.0,hits,len(words)
 
-def keyword_overlap(product, title):
-    """返回 (重合率, 命中数, 总数)"""
-    brand = norm(product.get("brand"))
-    model = norm(product.get("model"))
-    kws = [norm(k) for k in product.get("keywords", []) if k]
-    t = norm(title)
-    hits = 0
-    total = 0
-    if brand:
-        total += 1
-        if brand in t:
-            hits += 1
-    if model:
-        total += 1
-        if model in t:
-            hits += 1
-    for k in kws:
-        if not k:
-            continue
-        total += 1
-        if k in t:
-            hits += 1
-    return (hits / total) if total else 0.0, hits, total
+def parse_date(value):
+    dt=datetime.fromisoformat(value.replace('Z','+00:00'))
+    return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt.astimezone(timezone.utc)
 
-
-MATCH_SCORE = {"confirmed": 1.0, "similar": 0.6, "unknown": 0.3}
-SOURCE_CRED = {
-    "YouTube": 0.90, "TikTok": 0.85, "Douyin": 0.90, "抖音": 0.90,
-    "TikTok Shop": 0.80,
-}
-
-
-def recency_score(published):
-    if not published:
-        return None
+def recency_score(published,as_of=None):
+    if not published: return None
     try:
-        s = published.replace("Z", "+00:00")
-        dt = datetime.fromisoformat(s)
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        now = datetime.now(timezone.utc)
-        days = max(0, (now - dt).days)
-        return 0.5 ** (days / 180.0)  # 180 天半衰期
-    except Exception:
-        return None
+        date=parse_date(published); now=as_of or datetime.now(timezone.utc)
+        days=(now-date).total_seconds()/86400
+        return None if days<0 else 0.5**(days/180)
+    except (ValueError,TypeError,AttributeError): return None
 
+def interaction_score(value):
+    if value is None or isinstance(value,bool): return None
+    try: number=float(value)
+    except (ValueError,TypeError): return None
+    if not math.isfinite(number) or number<0: return None
+    return min(1.0,math.log10(number+1)/6)
 
-def interaction_score(val):
-    if val is None:
-        return None
+def canonical_url(value):
     try:
-        v = float(val)
-    except Exception:
-        return None
-    if not math.isfinite(v):
-        return None
-    if v <= 0:
-        return 0.0
-    return min(1.0, math.log10(v + 1) / 6.0)  # 1e6 播放≈满分
+        p=urlsplit(value)
+        if p.scheme!='https' or not p.hostname or p.username or p.password: raise ValueError('HTTPS URL required')
+        query=[(k,v) for k,v in parse_qsl(p.query,keep_blank_values=True) if not k.lower().startswith('utm_') and k.lower() not in {'fbclid','gclid'}]
+        return urlunsplit((p.scheme,p.netloc.lower(),p.path.rstrip('/'),urlencode(sorted(query)),''))
+    except (TypeError,AttributeError): raise ValueError('URL must be text')
 
+def rank(data,as_of=None):
+    if not isinstance(data,dict) or not isinstance(data.get('product'),dict) or not isinstance(data.get('candidates'),list):
+        raise ValueError('Expected product object and candidates array')
+    product=data['product']
+    if not isinstance(product.get('keywords',[]),list): raise ValueError('keywords must be an array')
+    rows=[]; seen=set(); duplicates=0
+    for candidate in data['candidates']:
+        if not isinstance(candidate,dict): raise ValueError('Each candidate must be an object')
+        url=canonical_url(candidate.get('url'))
+        if url in seen: duplicates+=1; continue
+        seen.add(url)
+        title=candidate.get('title','')
+        if not isinstance(title,str): raise ValueError('title must be text')
+        match=candidate.get('match_level') or 'unknown'
+        if match not in MATCH_SCORE: raise ValueError('match_level must be confirmed, similar or unknown')
+        overlap,_,_=keyword_overlap(product,title)
+        recent=recency_score(candidate.get('published'),as_of); views=interaction_score(candidate.get('views'))
+        weights={'match':.40,'keywords':.20,'views':.20,'source':.10,'recency':.10}
+        if views is None: weights['match']+=weights.pop('views')
+        if recent is None: weights['match']+=weights.pop('recency')
+        values={'match':MATCH_SCORE[match],'keywords':overlap,'views':views or 0.0,
+                'source':SOURCE_CRED.get(candidate.get('source'),.70),'recency':recent or 0.0}
+        parts={key:round(weight*values[key],6) for key,weight in weights.items()}
+        supplied={key:candidate.get(key) for key in ('source','title','published','views','likes','comments')}
+        rows.append({**supplied,'url':url,'match_level':match,'score':round(sum(parts.values()),6),
+                     'weights':weights,'score_parts':parts,'keyword_overlap':overlap,
+                     'interaction_known':views is not None,'recency_known':recent is not None,
+                     'content_verified':False,'metrics_origin':'SUPPLIED_UNVERIFIED'})
+    rows.sort(key=lambda row:(-row['score'],row['url']))
+    return {'as_of':(as_of or datetime.now(timezone.utc)).isoformat(),'results':rows,'duplicates_removed':duplicates,
+            'notice':'Heuristic ranking of supplied claims; URLs, identity and metrics were not independently verified.'}
 
-def main():
-    if len(sys.argv) < 2:
-        sys.stderr.write("usage: extract_and_rank.py candidates.json\n")
-        sys.exit(1)
-    with open(sys.argv[1], encoding="utf-8") as f:
-        data = json.load(f)
-    product = data.get("product", {})
-    cands = data.get("candidates", [])
+def main(argv=None):
+    p=argparse.ArgumentParser(description=__doc__); p.add_argument('input'); p.add_argument('--json',action='store_true'); p.add_argument('--as-of')
+    args=p.parse_args(argv)
+    try:
+        with open(args.input,encoding='utf-8-sig') as f: data=json.load(f)
+        report=rank(data,parse_date(args.as_of) if args.as_of else None)
+    except (OSError,ValueError,TypeError) as exc: p.exit(2,'Input error: '+str(exc)+'\n')
+    if args.json: print(json.dumps(report,ensure_ascii=False,indent=2,allow_nan=False)); return 0
+    print('# 商品视频候选排序\n\n'+report['notice']+'\n')
+    for index,row in enumerate(report['results'][:5],1):
+        print(f"## {index}. {row['title']} — {row['score']}\n- URL: {row['url']}\n- 匹配由输入声明: {row['match_level']}\n- 播放量是否有效填写: {row['interaction_known']}（未独立核实）\n- 分数构成: {row['score_parts']}\n")
+    print('去重数:',report['duplicates_removed']); return 0
 
-    results = []
-    for c in cands:
-        ov, hits, total = keyword_overlap(product, c.get("title", ""))
-        match = c.get("match_level") or "unknown"
-        mscore = MATCH_SCORE.get(match, 0.3)
-        rec = recency_score(c.get("published"))
-        inter = interaction_score(c.get("views"))
-        cred = SOURCE_CRED.get(c.get("source", ""), 0.70)
-
-        # 动态权重: 缺失项不扣分, 权重让渡给 match
-        w = {"match": 0.40, "kw": 0.20, "inter": 0.20, "source": 0.10, "rec": 0.10}
-        if inter is None:
-            w["match"] += w.pop("inter")
-        if rec is None:
-            w["match"] += w.pop("rec")
-        w_sum = sum(w.values())
-
-        parts = {
-            "match": mscore * w["match"],
-            "kw": ov * w["kw"],
-            "inter": (inter if inter is not None else 0.0) * w.get("inter", 0.0),
-            "source": cred * w["source"],
-            "rec": (rec if rec is not None else 0.0) * w.get("rec", 0.0),
-        }
-        total_score = sum(parts.values()) / w_sum if w_sum else 0.0
-
-        results.append({
-            "url": c.get("url"),
-            "title": c.get("title"),
-            "source": c.get("source"),
-            "match_level": match,
-            "score": round(total_score, 3),
-            "keyword_overlap": round(ov, 3),
-            "interaction_known": inter is not None,
-            "recency_known": rec is not None,
-            "views": c.get("views"),
-            "likes": c.get("likes"),
-            "comments": c.get("comments"),
-            "published": c.get("published"),
-        })
-
-    results.sort(key=lambda r: r["score"], reverse=True)
-
-    lines = ["# 商品反查带货视频 · 排序报告", ""]
-    pname = " ".join(filter(None, [product.get("product_name", ""),
-                                    product.get("brand", ""), product.get("model", "")])).strip()
-    lines.append(f"商品：{pname or 'UNKNOWN'}")
-    lines.append(f"候选数：{len(results)} ｜ 展示 Top {min(5, len(results))}")
-    lines.append("")
-    for i, r in enumerate(results[:5], 1):
-        lines.append(f"## 第 {i} 名 · 得分 {r['score']}")
-        lines.append(f"- 来源：{r['source']} ｜ 匹配：{r['match_level']}")
-        lines.append(f"- 标题：{r['title']}")
-        lines.append(f"- 链接：{r['url']}")
-        lines.append(f"- 发布：{r['published'] or 'UNKNOWN'}")
-        views = r['views'] if r['views'] is not None else 'UNKNOWN'
-        likes = r['likes'] if r['likes'] is not None else 'UNKNOWN'
-        comments = r['comments'] if r['comments'] is not None else 'UNKNOWN'
-        lines.append(f"- 播放：{views} ｜ 点赞：{likes} ｜ 评论：{comments}")
-        lines.append(f"- 关键词重合率：{r['keyword_overlap']} ｜ 互动量已核实：{r['interaction_known']} ｜ 时效已核实：{r['recency_known']}")
-        lines.append("")
-
-    print("\n".join(lines))
-
-
-if __name__ == "__main__":
-    main()
+if __name__=='__main__': raise SystemExit(main())
