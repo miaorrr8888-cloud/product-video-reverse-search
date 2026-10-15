@@ -31,9 +31,9 @@ python scripts/extract_and_rank.py examples/candidates.json --as-of 2026-10-15T0
 
 已补：补输入校验、跟踪参数去重、固定 --as-of 时间、JSON 分数构成；无效计数和未来日期保留未知；明确输入数据未被独立核实。
 
-## 仍然缺什么
+## 当前限制
 
-脚本不执行网络反向搜索或图片匹配；confirmed 由输入声明。来源权重是内部假设，分数不等于销量、热度真实性或版权许可。
+实时模式需自己配置 API 凭证及额度，本次没有调用付费服务或验证真实账号；仅关键词检索，不是图像反搜，同款仍需看型号和外观。
 
 ## 验证与使用注意
 
@@ -50,3 +50,21 @@ python -m unittest discover -s tests -v
 由 miaorrr8888-cloud 在 AI 辅助下积累和维护，来源与边界见 [PROVENANCE.md](PROVENANCE.md)，许可见 [LICENSE](LICENSE)。
 
 [全部独立技能与阶段性工作记录](https://github.com/miaorrr8888-cloud/agent-skills-worklog)
+
+## 第二轮：官方视频检索入口
+
+新增 YouTube 官方检索适配器，输出可直接交给排序器；也支持离线导入 API 响应，无播放量时保持未知。
+
+在仓库根目录运行：
+
+```sh
+python scripts/search_youtube.py --query "synthetic product" --response examples/youtube-response.json
+# 实时检索会消耗官方额度，先在本机配置 YOUTUBE_API_KEY，再明确加 --live。
+# python scripts/search_youtube.py --query "brand model" --live --limit 10
+```
+
+新增工具的输入字段见脚本参数与 examples/。快照示例采用固定日期，过期后正常返回 HOLD；需要检查新采集的页面时填写真实带时区的采集时间，不要改日期伪装新证据。
+
+## 接入依据
+
+[YouTube 官方 search.list 文档](https://developers.google.com/youtube/v3/docs/search/list)。实时模式只发一页请求，不自动翻页或重试；账号与额度错误应停止。
