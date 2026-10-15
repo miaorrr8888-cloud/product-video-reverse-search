@@ -33,7 +33,7 @@ python scripts/extract_and_rank.py examples/candidates.json --as-of 2026-10-15T0
 
 ## 当前限制
 
-实时模式需自己配置 API 凭证及额度，本次没有调用付费服务或验证真实账号；仅关键词检索，不是图像反搜，同款仍需看型号和外观。
+本地相似度不是物体身份判定，背景变化会影响分数；当前没有上传图片到互联网进行像素反搜。宿主搜索工具须实际可用；独立命令不代替搜索工具。官方 YouTube API 路线的账号与额度仍未实测。
 
 ## 验证与使用注意
 
@@ -43,7 +43,7 @@ python -m unittest discover -s tests -v
 
 测试覆盖被断言的离线行为，不等于真实平台、生产模型或业务效果验证。
 
-示例数据和图片均为合成演示，不是真实客户、交易、销量或模型成绩。不要提交真实凭据和私有输入。
+live-search-candidates.json 记录本次公开网络检索的候选链接，标题取自检索结果，内容与同款未核实；其他示例为合成演示，不代表客户、交易或销量。不要提交真实凭据和私有输入。
 
 ## 来源与工作记录
 
@@ -68,3 +68,13 @@ python scripts/search_youtube.py --query "synthetic product" --response examples
 ## 接入依据
 
 [YouTube 官方 search.list 文档](https://developers.google.com/youtube/v3/docs/search/list)。实时模式只发一页请求，不自动翻页或重试；账号与额度错误应停止。
+
+## 第三轮：本地以图找图与免密钥检索路线
+
+新增本地图片检索，用形状哈希和颜色分布排序；已用真实生成的参考图找出换场景版本。增加使用宿主搜索工具获取真实公开视频候选的路线，无需为该路线提供 YouTube API 密钥。
+
+```sh
+python -m pip install -r requirements-images.txt
+python scripts/search_local_images.py examples/image-search/anchor.png examples/image-search
+python scripts/extract_and_rank.py examples/live-search-candidates.json --json --as-of 2026-10-15T00:00:00Z
+```

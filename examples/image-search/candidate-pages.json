@@ -1,0 +1,16 @@
+{
+  "query": "turquoise ceramic mug orange handle triangle",
+  "method": "HOST_IMAGE_SEARCH_BY_KEYWORDS",
+  "uploaded_reference_image": false,
+  "candidates": [
+    {
+      "page_url": "https://www.continente.pt/produto/caneca-380ml-azul-com-asa-curva-kasa-kasa-8532838.html",
+      "identity_verified": false
+    },
+    {
+      "page_url": "https://jessicawertz.com/shop-pottery/turquoise-triangle",
+      "identity_verified": false
+    }
+  ],
+  "scope": "SEARCH_CANDIDATE_PAGES_ONLY; no product, price or license verification"
+}

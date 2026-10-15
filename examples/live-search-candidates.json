@@ -1,0 +1,28 @@
+{
+  "product": {
+    "brand": "Logitech",
+    "model": "MX Master 3S",
+    "keywords": [
+      "review"
+    ]
+  },
+  "candidates": [
+    {
+      "url": "https://www.youtube.com/watch?v=YpHt2s_2csY",
+      "title": "Logitech MX Mechanical & Master 3S Review - Next Level Productivity!",
+      "source": "YouTube",
+      "match_level": "unknown",
+      "views": null
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=j1DUZO5jc1s",
+      "title": "The best mouse? Logitech MX Master 3S review",
+      "source": "YouTube",
+      "match_level": "unknown",
+      "views": null
+    }
+  ],
+  "evidence_scope": "LIVE_SEARCH_RESULT_METADATA_ONLY",
+  "watched": false,
+  "query": "site:youtube.com/watch Logitech MX Master 3S review"
+}
