@@ -10,6 +10,17 @@
 
 对已经取得的视频候选排出优先查看顺序，说明分数来自哪些字段，减少盲目翻找。
 
+## 安装
+
+```sh
+# 候选排序：纯标准库
+python scripts/extract_and_rank.py examples/candidates.json --as-of 2026-10-15T00:00:00Z
+
+# 本地以图找图（可选）：需要图像依赖
+python -m pip install -r requirements-images.txt
+python scripts/search_local_images.py --help
+```
+
 ## 快速开始
 
 Python 3.10+，标准库。
@@ -32,6 +43,14 @@ python scripts/extract_and_rank.py examples/candidates.json --as-of 2026-10-15T0
 原有缺口：名称容易让人误以为自带搜全网和视觉同款识别；缺去重与可复现评分时间。
 
 已补：补输入校验、跟踪参数去重、固定 --as-of 时间、JSON 分数构成；无效计数和未来日期保留未知；明确输入数据未被独立核实。
+
+## 适用用户
+
+**适合：** 拿到一张商品图，想找到公开视频候选并做相似度排序的人；
+需要把「候选」与「确认是同一商品」分开管理的人。
+
+**不适合：** 期待工具保证候选就是同款的人（候选必须人工确认）；
+需要绕过平台下载受版权保护视频的人。
 
 ## 当前限制
 
