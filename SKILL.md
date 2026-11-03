@@ -2,7 +2,7 @@
 name: product-video-reverse-search
 description: 按商品图片线索搜索公开视频候选，并对本地图片做相似排序；候选需要人工确认，不保证是同一商品。
 license: MIT
-version: "1.1.0"
+version: 1.1.1
 display_name: "商品图片找视频"
 agent_created: true
 
