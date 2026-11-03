@@ -80,3 +80,12 @@ python -m pip install -r requirements-images.txt
 python scripts/search_local_images.py examples/image-search/anchor.png examples/image-search
 python scripts/extract_and_rank.py examples/live-search-candidates.json --json --as-of 2026-10-15T00:00:00Z
 ```
+
+## 运行环境
+
+| 项 | 状态 |
+|---|---|
+| Windows 11 + Python 3.12 / 3.13 | ✅ 实测通过 |
+| Linux / macOS | ⚠️ **未实测**。代码用 `pathlib`，无硬编码分隔符，理论上可跑，但测试只在 Windows 跑过，不声称支持 |
+
+诚实标注：没实跑过的平台，不要在对外文案里写「已支持」。

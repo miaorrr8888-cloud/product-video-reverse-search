@@ -1,9 +1,12 @@
 ---
 name: product-video-reverse-search
-description: 从商品信息检索相关视频并对用户提供的候选证据做排序，区分同款声明、相似和未知。
+description: 按商品图片线索搜索公开视频候选，并对本地图片做相似排序；候选需要人工确认，不保证是同一商品。
 license: MIT
----
+version: "1.1.0"
+display_name: "商品图片找视频"
+agent_created: true
 
+---
 # 商品相关视频检索与排序
 
 先记录品牌、型号、外观特征和检索关键词。用当前可用的搜索工具或用户提供的链接取得候选；不假设旧接口或第三方免费额度仍可用。
