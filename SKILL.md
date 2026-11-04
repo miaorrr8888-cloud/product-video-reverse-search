@@ -1,5 +1,8 @@
 ---
 name: product-video-reverse-search
+slug: zhengrong-product-video-reverse-search
+displayName: "商品图片找视频"
+summary: "按商品图片线索搜索公开视频候选，并对本地图片做相似度排序；候选需人工确认，不保证同一商品。"
 description: 按商品图片线索搜索公开视频候选，并对本地图片做相似排序；候选需要人工确认，不保证是同一商品。
 license: MIT
 version: 1.1.1
