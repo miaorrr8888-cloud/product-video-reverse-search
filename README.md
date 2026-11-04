@@ -100,6 +100,15 @@ python scripts/search_local_images.py examples/image-search/anchor.png examples/
 python scripts/extract_and_rank.py examples/live-search-candidates.json --json --as-of 2026-10-15T00:00:00Z
 ```
 
+## 许可证
+
+MIT，全文见 [LICENSE](LICENSE)。可商用、可修改、可再分发，保留版权与许可声明即可。
+
+**不提供任何形式的担保。** 本技能输出的是辅助判断，不构成法律、财税或平台合规意见；
+视频候选需人工确认，不保证与被搜商品为同一件。
+
+第三方依赖各自遵循其原始许可证，本项目不再分发它们的代码或模型权重，详见 `PROVENANCE.md`（如有）。
+
 ## 运行环境
 
 | 项 | 状态 |
